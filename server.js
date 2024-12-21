@@ -2,9 +2,6 @@
 var express = require("express");
 var app = express();
 
-const crypto = require("crypto");
-require('dotenv').config();
-
 // express formidable is used to parse the form data values
 var formidable = require("express-formidable");
 app.use(formidable());
@@ -45,44 +42,10 @@ app.use("/public/fonts", express.static(__dirname + "/public/fonts"));
 app.set("view engine", "ejs");
 
 // main URL of website
-var mainURL = "https://cloudhack-project.onrender.com";
+var mainURL = "http://localhost:3000";
 
 // global database object
 var database = null;
-
-// Encryption and Decryption Constants
-const algorithm = "aes-256-cbc";
-const secretKey = (process.env.SECRET_KEY || "your_secret_key").padEnd(32, "0").slice(0, 32);
-// const iv = crypto.randomBytes(16);
-const iv = Buffer.alloc(16,0);
-
-
-function encrypt(data) {
-    const cipher = crypto.createCipheriv(algorithm, secretKey, iv);
-    let encrypted = cipher.update(data);
-    encrypted = Buffer.concat([encrypted, cipher.final()]);
-    return {
-        iv: iv.toString('hex'),
-        content: encrypted.toString('hex'),
-    };
-}
-
-function decrypt(encryptedText) {
-    const decipher = crypto.createDecipheriv(algorithm, Buffer.from(secretKey, 'hex'), iv);
-    let decrypted = decipher.update(encryptedText, 'base64', 'utf8');
-    decrypted += decipher.final('utf8');
-    return decrypted;
-}
-// function decrypt(encrypted) {
-//     const decipher = crypto.createDecipheriv(
-//         algorithm,
-//         secretKey,
-//         Buffer.from(encrypted.iv, 'hex')
-//     );
-//     let decrypted = decipher.update(Buffer.from(encrypted.content, 'hex'));
-//     decrypted = Buffer.concat([decrypted, decipher.final()]);
-//     return decrypted.toString();
-// }
 
 // app middleware to attach main URL and user object with each request
 app.use(function (request, result, next) {
@@ -95,7 +58,7 @@ app.use(function (request, result, next) {
 });
 
 // recursive function to get the file from uploaded
-function recursiveGetFile(files, _id) {
+function recursiveGetFile (files, _id) {
     var singleFile = null;
 
     for (var a = 0; a < files.length; a++) {
@@ -120,7 +83,7 @@ function recursiveGetFile(files, _id) {
 }
 
 // function to add new uploaded object and return the updated array
-function getUpdatedArray(arr, _id, uploadedObj) {
+function getUpdatedArray (arr, _id, uploadedObj) {
     for (var a = 0; a < arr.length; a++) {
         // push in files array if type is folder and ID is found
         if (arr[a].type == "folder") {
@@ -166,7 +129,7 @@ function removeFileReturnUpdated(arr, _id) {
 }
 
 // recursive function to search uploaded files
-function recursiveSearch(files, query) {
+function recursiveSearch (files, query) {
     var singleFile = null;
 
     for (var a = 0; a < files.length; a++) {
@@ -197,7 +160,7 @@ function recursiveSearch(files, query) {
 }
 
 // recursive function to search shared files
-function recursiveSearchShared(files, query) {
+function recursiveSearchShared (files, query) {
     var singleFile = null;
 
     for (var a = 0; a < files.length; a++) {
@@ -226,24 +189,22 @@ function recursiveSearchShared(files, query) {
 }
 
 // start the http server
-const mongoURI = process.env.MONGO_URI;
 http.listen(3000, function () {
     console.log("Server started at " + mainURL);
 
     // connect with mongo DB server
-    // mongoClient.connect("mongodb://localhost:27017", {
-    mongoClient.connect(mongoURI, { useUnifiedTopology: true }, (error, client) => {
-        if (error) {
-            console.error("Database connection failed:", error);
-        } else {
-            database = client.db("file_transfer");
-            console.log("Database connected.");
-        }
-        
+    mongoClient.connect("mongodb://localhost:27017", {
+        useUnifiedTopology: true
+    }, function (error, client) {
+
+        // connect database (it will automatically create the database if not exists)
+        database = client.db("file_transfer");
+        console.log("Database connected.");
+
         app.get("/pro-versions", function (request, result) {
             result.render("proVersions", {
                 "request": request
-            });
+            }); 
         });
 
         app.get("/Admin", async function (request, result) {
@@ -295,119 +256,12 @@ http.listen(3000, function () {
             });
         });
 
-
-//     app.get("/DownloadSharedFile/:fileId", async function (request, result) {
-//     if (!request.session.user) {
-//         return result.redirect("/Login");
-//     }
-
-//     try {
-//         const fileId = request.params.fileId;
-
-//         // Find the file in the `files` collection
-//         const file = await database.collection("files").findOne({
-//             _id: ObjectId(fileId),
-//         });
-
-//         if (!file) {
-//             request.session.status = "error";
-//             request.session.message = "File not found.";
-//             return result.redirect("/SharedWithMe");
-//         }
-
-//         // Decrypt the file if necessary
-//         const fileData = file.encrypted ? decrypt(file.data) : file.data;
-
-//         // Send the file as a download
-//         result.set({
-//             "Content-Type": file.type,
-//             "Content-Disposition": `attachment; filename="${file.name}"`,
-//         });
-
-//         result.send(Buffer.from(fileData, file.encrypted ? 'base64' : undefined));
-//       } catch (error) {
-//         console.error("Error downloading shared file:", error);
-//         request.session.status = "error";
-//         request.session.message = "Failed to download the file. Please try again.";
-//         return result.redirect("/SharedWithMe");
-//     }
-// });
-        app.get("/DownloadSharedFile/:fileId", async function (request, result) {
-    if (!request.session.user) {
-        return result.redirect("/Login");
-    }
-
-    try {
-        const fileId = request.params.fileId;
-
-        // Validate ObjectId
-        if (!ObjectId.isValid(fileId)) {
-            request.session.status = "error";
-            request.session.message = "Invalid file ID.";
-            return result.redirect("/SharedWithMe");
-        }
-
-        // Find the file in the database
-        const file = await database.collection("files").findOne({
-            _id: ObjectId(fileId),
+        // get all files shared with logged-in user
+        app.get("/SharedWithMe/:_id?", async function (request, result) {
+            result.render("SharedWithMe", {
+                "request": request
+            });
         });
-
-        if (!file) {
-            request.session.status = "error";
-            request.session.message = "File not found.";
-            return result.redirect("/SharedWithMe");
-        }
-
-        // Decrypt the file data if it's encrypted
-        let fileData = file.data;
-        if (file.encrypted) {
-            fileData = decrypt(file.data);
-        }
-
-        // Send the file as a downloadable response
-        result.set({
-            "Content-Type": file.type,
-            "Content-Disposition": `attachment; filename="${file.name}"`,
-        });
-
-        result.send(Buffer.from(fileData, "base64"));
-    } catch (error) {
-        console.error("Error downloading shared file:", error);
-        request.session.status = "error";
-        request.session.message = "Failed to download the file. Please try again.";
-        return result.redirect("/SharedWithMe");
-    }
-});
-
-
-
-
-        
-        // Get all files shared with the logged-in user
-app.get("/SharedWithMe", async function (request, result) {
-    if (!request.session.user) {
-        return result.redirect("/Login");
-    }
-
-    try {
-        const user = await database.collection("users").findOne({
-            _id: ObjectId(request.session.user._id)
-        });
-
-        const sharedFiles = user.sharedWithMe || [];
-
-        result.render("SharedWithMe", {
-            request,
-            sharedFiles, // Pass shared files to the template
-        });
-    } catch (error) {
-        console.error("Error fetching shared files:", error);
-        request.session.status = "error";
-        request.session.message = "Unable to fetch shared files.";
-        return result.redirect("/");
-    }
-});
-
 
         app.post("/DeleteLink", async function (request, result) {
 
@@ -469,202 +323,100 @@ app.get("/SharedWithMe", async function (request, result) {
         app.get("/SharedViaLink/:hash", async function (request, result) {
             const hash = request.params.hash;
 
-            const link = await database.collection("public_links").findOne({ hash });
-
-            if (!link) {
-                request.session.status = "error";
-                request.session.message = "Link has expired or does not exist.";
-                return result.redirect("/");
-            }
-
-            const file = await database.collection("files").findOne({
-                _id: ObjectId(link.fileId),
+            var link = await database.collection("public_links").findOne({
+                "hash": hash
             });
 
-            if (!file) {
+            if (link == null) {
                 request.session.status = "error";
-                request.session.message = "File not found.";
-                return result.redirect("/");
+                request.session.message = "Link expired.";
+
+                result.render("SharedViaLink", {
+                    "request": request
+                });
+                return false;
             }
 
-            // Decrypt the file data
-            const decryptedFile = decrypt(file.data);
-
-            // Send the file to the client
-            result.setHeader("Content-Disposition", `attachment; filename="${file.name}"`);
-            result.setHeader("Content-Type", file.type);
-            result.send(decryptedFile);
+            result.render("SharedViaLink", {
+                "request": request,
+                "link": link
+            });
         });
 
-
         app.post("/ShareViaLink", async function (request, result) {
-    const _id = request.fields._id; // File ID
-    const sharedWithName = request.fields.sharedWithUsername; // Name of the recipient
+            const _id = request.fields._id;
 
-    if (request.session.user) {
-        try {
-            const user1 = await database.collection("users").findOne({
-                "_id": ObjectId(request.session.user._id)
-            });
+            if (request.session.user) {
+                var user = await database.collection("users").findOne({
+                    "_id": ObjectId(request.session.user._id)
+                });
+                var file = await recursiveGetFile(user.uploaded, _id);
 
-            const file = await database.collection("files").findOne({
-                _id: ObjectId(_id)
-            });
+                if (file == null) {
+                    request.session.status = "error";
+                    request.session.message = "File does not exists";
 
-            if (!file) {
-                request.session.status = "error";
-                request.session.message = "File does not exist.";
-                return result.redirect("/MyUploads");
-            }
+                    const backURL = request.header("Referer") || "/";
+                    result.redirect(backURL);
+                    return false;
+                }
 
-            // Find the recipient by the `name` field
-            const user2 = await database.collection("users").findOne({
-                name: { $regex: `^${sharedWithName}$`, $options: "i" } // Case-insensitive match
-            });
-
-            if (!user2) {
-                request.session.status = "error";
-                request.session.message = "The user you are sharing with does not exist.";
-                return result.redirect("/MyUploads");
-            }
-
-            const hash = crypto.randomBytes(16).toString("hex"); // Generate unique hash
-            const link = `${request.mainURL}/SharedViaLink/${hash}`;
-
-            // Save the sharable link
-            await database.collection("public_links").insertOne({
-                hash,
-                file,
-                uploadedBy: {
-                    _id: user1._id,
-                    email: user1.email,
-                },
-                sharedWith: {
-                    _id: user2._id,
-                    name: user2.name,
-                },
-                createdAt: new Date(),
-            });
-
-            // Add file to "sharedWithMe" array for User 2
-            await database.collection("users").updateOne(
-                { _id: user2._id },
-                {
-                    $push: {
-                        sharedWithMe: {
-                            _id: file._id,
-                            name: file.name,
-                            type: file.type,
-                            size: file.size,
-                            sharedBy: user1.name,
-                            sharedAt: new Date(),
+                bcrypt.hash(file.name, 10, async function (error, hash) {
+                    hash = hash.substring(10, 20);
+                    const link = mainURL + "/SharedViaLink/" + hash;
+                    await database.collection("public_links").insertOne({
+                        "hash": hash,
+                        "file": file,
+                        "uploadedBy": {
+                            "_id": user._id,
+                            "name": user.name,
+                            "email": user.email
                         },
-                    },
-                }
-            );
+                        "createdAt": new Date().getTime()
+                    });
 
-            request.session.status = "success";
-            request.session.message = `Sharable link: ${link}`;
-            return result.redirect("/MySharedLinks");
-        } catch (error) {
-            console.error("Error sharing file:", error);
-            request.session.status = "error";
-            request.session.message = "Failed to share the file. Please try again.";
-            return result.redirect("/MyUploads");
-        }
-    }
+                    request.session.status = "success";
+                    request.session.message = "Share link: " + link;
 
-    result.redirect("/Login");
-});
+                    const backURL = request.header("Referer") || "/";
+                    result.redirect(backURL);
+                });
 
+                return false;
+            }
 
-        
+            result.redirect("/Login");
+        });
+
         // delete uploaded file
-        // app.post("/DeleteFile", async function (request, result) {
-        //     const _id = request.fields._id;
+        app.post("/DeleteFile", async function (request, result) {
+            const _id = request.fields._id;
 
-        //     if (request.session.user) {
-        //         var user = await database.collection("users").findOne({
-        //             "_id": ObjectId(request.session.user._id)
-        //         });
+            if (request.session.user) {
+                var user = await database.collection("users").findOne({
+                    "_id": ObjectId(request.session.user._id)
+                });
 
-        //         var updatedArray = await removeFileReturnUpdated(user.uploaded, _id);
-        //         for (var a = 0; a < updatedArray.length; a++) {
-        //             updatedArray[a]._id = ObjectId(updatedArray[a]._id);
-        //         }
-
-        //         await database.collection("users").updateOne({
-        //             "_id": ObjectId(request.session.user._id)
-        //         }, {
-        //             $set: {
-        //                 "uploaded": updatedArray
-        //             }
-        //         });
-
-        //         const backURL = request.header('Referer') || '/';
-        //         result.redirect(backURL);
-        //         return false;
-        //     }
-
-        //     result.redirect("/Login");
-        // });
-        // Delete uploaded file
-app.post("/DeleteFile", async function (request, result) {
-    const _id = request.fields._id;
-
-    if (request.session.user) {
-        try {
-            const userId = ObjectId(request.session.user._id);
-
-            // Fetch the logged-in user
-            const user = await database.collection("users").findOne({ _id: userId });
-            if (!user) {
-                request.session.status = "error";
-                request.session.message = "User not found. Please log in again.";
-                return result.redirect("/Login");
-            }
-
-            // Validate the file ID
-            if (!ObjectId.isValid(_id)) {
-                request.session.status = "error";
-                request.session.message = "Invalid file ID.";
-                return result.redirect("/MyUploads");
-            }
-
-            // Find and remove the file from the user's uploaded array
-            const updatedArray = removeFileReturnUpdated(user.uploaded, _id);
-
-            // Update the user's uploaded files in the database
-            await database.collection("users").updateOne(
-                { _id: userId },
-                { $set: { uploaded: updatedArray } }
-            );
-
-            // Delete the file from the filesystem and database
-            const file = await database.collection("files").findOne({ _id: ObjectId(_id) });
-            if (file) {
-                try {
-                    fileSystem.unlinkSync(file.filePath); // Remove the physical file
-                } catch (err) {
-                    console.error("Error deleting file from filesystem:", err);
+                var updatedArray = await removeFileReturnUpdated(user.uploaded, _id);
+                for (var a = 0; a < updatedArray.length; a++) {
+                    updatedArray[a]._id = ObjectId(updatedArray[a]._id);
                 }
-                await database.collection("files").deleteOne({ _id: ObjectId(_id) });
+
+                await database.collection("users").updateOne({
+                    "_id": ObjectId(request.session.user._id)
+                }, {
+                    $set: {
+                        "uploaded": updatedArray
+                    }
+                });
+
+                const backURL = request.header('Referer') || '/';
+                result.redirect(backURL);
+                return false;
             }
 
-            request.session.status = "success";
-            request.session.message = "File deleted successfully.";
-            return result.redirect("/MyUploads");
-        } catch (error) {
-            console.error("Error deleting file:", error);
-            request.session.status = "error";
-            request.session.message = "An error occurred while deleting the file.";
-            return result.redirect("/MyUploads");
-        }
-    }
-
-    result.redirect("/Login");
-});
-
+            result.redirect("/Login");
+        });
 
         // download file
         app.post("/DownloadFile", async function (request, result) {
@@ -697,7 +449,7 @@ app.post("/DeleteFile", async function (request, result) {
                 });
 
                 var fileUploaded = await recursiveGetFile(user.uploaded, _id);
-
+                
                 if (fileUploaded == null) {
                     result.json({
                         "status": "error",
@@ -730,8 +482,6 @@ app.post("/DeleteFile", async function (request, result) {
             return false;
         });
 
-
-
         // view all files uploaded by logged-in user
         app.get("/MyUploads", async function (request, result) {
             if (request.session.user) {
@@ -740,13 +490,11 @@ app.post("/DeleteFile", async function (request, result) {
                     "_id": ObjectId(request.session.user._id)
                 });
 
-                const uploadedFiles = await database.collection("files").find({
-                    "uploadedBy._id": user._id
-                }).toArray();
+                var uploaded = user.uploaded;
 
                 result.render("MyUploads", {
                     "request": request,
-                    "uploaded": uploadedFiles
+                    "uploaded": uploaded
                 });
                 return false;
             }
@@ -755,157 +503,78 @@ app.post("/DeleteFile", async function (request, result) {
         });
 
         // upload new file
-        // upload new file
-// app.post("/UploadFile", async function (request, result) {
-//     if (request.session.user) {
-//         try {
-//             const user = await database.collection("users").findOne({
-//                 "_id": ObjectId(request.session.user._id)
-//             });
+        app.post("/UploadFile", async function (request, result) {
+            if (request.session.user) {
 
-//             if (!user) {
-//                 request.session.status = "error";
-//                 request.session.message = "User not found. Please log in again.";
-//                 return result.redirect("/Login");
-//             }
+                var user = await database.collection("users").findOne({
+                    "_id": ObjectId(request.session.user._id)
+                });
+                
+                if (request.files.file.size > 0) {
 
-//             if (request.files.file && request.files.file.size > 0) {
-//                 const fileBuffer = fileSystem.readFileSync(request.files.file.path);
+                    const _id = request.fields._id;
 
-//                 // Encrypt the file
-//                 const encryptedFile = encrypt(fileBuffer);
+                    var uploadedObj = {
+                        "_id": ObjectId(),
+                        "size": request.files.file.size, // in bytes
+                        "name": request.files.file.name,
+                        "type": request.files.file.type,
+                        "filePath": "",
+                        "createdAt": new Date().getTime()
+                    };
 
-//                 // Prepare file metadata
-//                 const uploadedObj = {
-//                     _id: new ObjectId(), // Generate a new ObjectId
-//                     size: request.files.file.size,
-//                     name: request.files.file.name,
-//                     type: request.files.file.type,
-//                     encrypted: true, // Indicate encryption status
-//                     createdAt: new Date().getTime(),
-//                 };
+                    var filePath = "public/uploads/" + user.email + "/" + new Date().getTime() + "-" + request.files.file.name;
+                    uploadedObj.filePath = filePath;
 
-//                 // Save file metadata and encrypted content to the database
-//                 await database.collection("files").insertOne({
-//                     ...uploadedObj,
-//                     data: encryptedFile, // Store the encrypted file
-//                     uploadedBy: {
-//                         _id: user._id,
-//                         email: user.email,
-//                     },
-//                 });
+                    if (!fileSystem.existsSync("public/uploads/" + user.email)){
+                        fileSystem.mkdirSync("public/uploads/" + user.email);
+                    }
 
-//                 // Add the uploaded file's metadata to the user's uploaded array
-//                 await database.collection("users").updateOne(
-//                     { "_id": ObjectId(request.session.user._id) },
-//                     { $push: { uploaded: uploadedObj } }
-//                 );
+                    // Read the file
+                    fileSystem.readFile(request.files.file.path, function (err, data) {
+                        if (err) throw err;
+                        console.log('File read!');
 
-//                 // Clean up temporary file
-//                 fileSystem.unlinkSync(request.files.file.path);
+                        // Write the file
+                        fileSystem.writeFile(filePath, data, async function (err) {
+                            if (err) throw err;
+                            console.log('File written!');
 
-//                 // Set success message and redirect
-//                 request.session.status = "success";
-//                 request.session.message = "File uploaded and encrypted successfully.";
-//                 return result.redirect("/MyUploads");
-//             }
+                            await database.collection("users").updateOne({
+                                "_id": ObjectId(request.session.user._id)
+                            }, {
+                                $push: {
+                                    "uploaded": uploadedObj
+                                }
+                            });
 
-//             // Handle case where no valid file is selected
-//             request.session.status = "error";
-//             request.session.message = "Please select a valid file to upload.";
-//             return result.redirect("/MyUploads");
-//         } catch (error) {
-//             console.error("File upload error:", error);
+                            request.session.status = "success";
+                            request.session.message = "Image has been uploaded. Try our premium version for image compression.";
 
-//             // Handle specific error for invalid ObjectId
-//             if (error instanceof mongodb.MongoServerError) {
-//                 request.session.message = "Invalid user ID format.";
-//             } else if (error.message.includes("ObjectId")) {
-//                 request.session.message = "Error processing file ID.";
-//             } else {
-//                 request.session.message = "File upload failed. Please try again.";
-//             }
+                            result.redirect("/MyUploads/" + _id);
+                        });
 
-//             request.session.status = "error";
-//             return result.redirect("/MyUploads");
-//         }
-//     }
+                        // Delete the file
+                        fileSystem.unlink(request.files.file.path, function (err) {
+                            if (err) throw err;
+                            console.log('File deleted!');
+                        });
+                    });
+                    
+                } else {
+                    request.status = "error";
+                    request.message = "Please select valid image.";
 
-//     // Redirect to login if session is not active
-//     result.redirect("/Login");
-// });
-        // Upload new file
-app.post("/UploadFile", async function (request, result) {
-    if (request.session.user) {
-        try {
-            // Fetch the logged-in user
-            const user = await database.collection("users").findOne({
-                "_id": ObjectId(request.session.user._id)
-            });
+                    result.render("MyUploads", {
+                        "request": request
+                    });
+                }
 
-            if (!user) {
-                request.session.status = "error";
-                request.session.message = "User not found. Please log in again.";
-                return result.redirect("/Login");
+                return false;
             }
 
-            // Check if a valid file is selected
-            if (request.files.file && request.files.file.size > 0) {
-                const fileBuffer = fileSystem.readFileSync(request.files.file.path);
-
-                // Prepare file metadata
-                const uploadedObj = {
-                    _id: new ObjectId(), // Generate a new ObjectId
-                    size: request.files.file.size,
-                    name: request.files.file.name,
-                    type: request.files.file.type,
-                    data: fileBuffer.toString("base64"), // Store file as base64
-                    uploadedBy: {
-                        _id: user._id,
-                        email: user.email,
-                    },
-                    createdAt: new Date().getTime(),
-                };
-
-                // Save file metadata and content to the database
-                await database.collection("files").insertOne(uploadedObj);
-
-                // Add the uploaded file's metadata to the user's uploaded array
-                await database.collection("users").updateOne(
-                    { "_id": ObjectId(request.session.user._id) },
-                    { $push: { uploaded: uploadedObj } }
-                );
-
-                // Clean up temporary file
-                fileSystem.unlinkSync(request.files.file.path);
-
-                // Set success message and redirect
-                request.session.status = "success";
-                request.session.message = "File uploaded successfully.";
-                return result.redirect("/MyUploads");
-            }
-
-            // Handle case where no valid file is selected
-            request.session.status = "error";
-            request.session.message = "Please select a valid file to upload.";
-            return result.redirect("/MyUploads");
-        } catch (error) {
-            console.error("File upload error:", error);
-
-            // General error handling
-            request.session.status = "error";
-            request.session.message = "File upload failed. Please try again.";
-            return result.redirect("/MyUploads");
-        }
-    }
-
-    // Redirect to login if session is not active
-    result.redirect("/Login");
-});
-
-
-
-
+            result.redirect("/Login");
+        });
 
         // logout the user
         app.get("/Logout", function (request, result) {
@@ -935,7 +604,7 @@ app.post("/UploadFile", async function (request, result) {
                 result.render("Login", {
                     "request": request
                 });
-
+                
                 return false;
             }
 
@@ -988,7 +657,7 @@ app.post("/UploadFile", async function (request, result) {
                         result.render("Register", {
                             "request": request
                         });
-
+                        
                     });
                 });
             } else {
