@@ -1,0 +1,25 @@
+<%- include("includes/header", { title: "Features" }) %>
+
+<div class="container" style="margin-top: 50px; margin-bottom: 50px;">
+    <h2 class="text-center">Features</h2>
+    <p class="text-center">Our platform provides the following core functionalities for free:</p>
+
+    <div class="row" style="margin-top: 30px;">
+        <div class="col-md-4">
+            <ul class="list-group">
+                <li class="list-group-item">Login and Registration</li>
+                <li class="list-group-item">Upload & Download Files</li>
+                <li class="list-group-item">Delete Files</li>
+                <li class="list-group-item">Public File Sharing via Link</li>
+                <li class="list-group-item">Realtime Collaboration</li>
+                <li class="list-group-item">Simple Blog Integration</li>
+                <li class="list-group-item">Image Compression</li>
+            </ul>
+        </div>
+        <div class="col-md-8">
+            <img src="<%= request.mainURL %>/public/img/blur-blog.png" style="width: 100%; border-radius:8px;" alt="Features Image" />
+        </div>
+    </div>
+</div>
+
+<%- include("includes/footer") %>

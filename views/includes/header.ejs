@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title><%= typeof title == "undefined" ? "Home" : title %></title>
+
+        <!-- Add a Google Font (Optional) -->
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Open+Sans:400,600,700&display=swap">
+
+        <link rel="stylesheet" href="<%= request.mainURL %>/public/css/bootstrap.min.css" />
+        <link rel="stylesheet" type="text/css" href="<%= request.mainURL %>/public/font-awesome-4.7.0/css/font-awesome.min.css" />
+        <link rel="stylesheet" type="text/css" href="<%= request.mainURL %>/public/css/style.css" />
+        
+        <script src="<%= request.mainURL %>/public/js/vue.global.js"></script>
+
+        <style>
+            body {
+                font-family: 'Open Sans', sans-serif;
+            }
+
+            /* Navbar Styling */
+            .navbar {
+                background: linear-gradient(90deg, #1D3557 0%, #457B9D 100%);
+                border-bottom: 2px solid #1D3557;
+            }
+
+            .navbar-brand, .navbar-nav .nav-link {
+                color: #F1FAEE !important;
+                font-weight: 600;
+            }
+
+            .navbar-brand:hover, .navbar-nav .nav-link:hover {
+                color: #E63946 !important;
+            }
+
+            .form-control {
+                border-radius: 20px;
+            }
+
+            .btn-outline-success {
+                border-color: #F1FAEE;
+                color: #F1FAEE;
+                border-radius: 20px;
+            }
+
+            .btn-outline-success:hover {
+                background: #F1FAEE;
+                color: #1D3557;
+            }
+
+            /* Hero Section */
+            .hero {
+                background: url('<%= request.mainURL %>/public/img/hero-bg.jpg') center/cover no-repeat;
+                position: relative;
+                height: 60vh;
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                justify-content: center;
+                text-align: center;
+                color: #fff;
+            }
+
+            .hero::after {
+                content: "";
+                position: absolute;
+                top:0; right:0; bottom:0; left:0;
+                background: rgba(0,0,0,0.4);
+            }
+
+            .hero-content {
+                position: relative;
+                z-index: 1;
+                max-width: 600px;
+                padding: 0 15px;
+            }
+
+            .hero h1 {
+                font-size: 3rem;
+                font-weight: 700;
+                margin-bottom: 20px;
+            }
+
+            .hero p {
+                font-size: 1.2rem;
+                margin-bottom: 30px;
+            }
+
+            .hero .btn {
+                padding: 10px 20px;
+                border-radius: 30px;
+                font-weight: 600;
+                background: #E63946;
+                border: none;
+            }
+
+            .hero .btn:hover {
+                background: #B02733;
+            }
+        </style>
+    </head>
+
+    <body>
+        <input type="hidden" id="base-url" value="<%= request.mainURL %>" />
+
+        <script>
+            var months = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+            const baseUrl = document.getElementById("base-url").value;
+        </script>
+
+        <%
+            months = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+
+            formatBytes = function(bytes, decimals = 2) {
+                if (bytes === 0) return '0 Bytes';
+
+                const k = 1024;
+                const dm = decimals < 0 ? 0 : decimals;
+                const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB', 'PB', 'EB', 'ZB', 'YB'];
+
+                const i = Math.floor(Math.log(bytes) / Math.log(k));
+                return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + ' ' + sizes[i];
+            };
+        %>
+
+        <!-- top nav bar -->
+        <nav class="navbar navbar-expand-lg">
+            <a class="navbar-brand" href="<%= request.mainURL %>">File Transfer</a>
+            <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent" 
+                    aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon" style="color:#F1FAEE;"></span>
+            </button>
+            
+            <div class="collapse navbar-collapse" id="navbarSupportedContent">
+                <ul class="navbar-nav mr-auto">
+                    <li class="nav-item active">
+                        <a class="nav-link" href="<%= request.mainURL %>">Home <span class="sr-only">(current)</span></a>
+                    </li>
+
+                    <li class="nav-item">
+                        <a class="nav-link" href="<%= request.mainURL %>/MyUploads">My Uploads</a>
+                    </li>
+
+                    <li class="nav-item">
+                        <a class="nav-link" href="<%= request.mainURL %>/SharedWithMe">Shared with me</a>
+                    </li>
+
+                    <li class="nav-item">
+                        <a class="nav-link" href="<%= request.mainURL %>/MySharedLinks">My shared links</a>
+                    </li>
+
+                    <% if (request.isLogin) { %>
+                        <li class="nav-item dropdown">
+                            <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" 
+                               data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                <%= request.session.user.name %>
+                            </a>
+                            <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+                                <a class="dropdown-item" href="<%= request.mainURL %>/Logout">Log out</a>
+                            </div>
+                        </li>
+                    <% } else { %>
+                        <li class="nav-item">
+                            <a class="nav-link" href="<%= request.mainURL %>/Login">Login</a>
+                        </li>
+
+                        <li class="nav-item">
+                            <a class="nav-link" href="<%= request.mainURL %>/Register">Register</a>
+                        </li>
+                    <% } %>
+
+                    <li class="nav-item">
+                        <a class="nav-link" href="<%= request.mainURL %>/Blog">Blog</a>
+                    </li>
+
+                    <li class="nav-item">
+                        <a class="nav-link" href="<%= request.mainURL %>/Admin">Admin Panel</a>
+                    </li>
+                </ul>
+
+                <!-- search field -->
+                <form class="form-inline my-2 my-lg-0" method="GET" action="<%= request.mainURL %>/Search">
+                    <input class="form-control mr-sm-2" type="search" placeholder="Search" name="search" 
+                           value="<%= request.query.search %>" />
+                    <button class="btn btn-outline-success my-2 my-sm-0" type="submit">Search</button>
+                </form>
+            </div>
+        </nav>
+
+        <!-- Hero Section (Optional) -->
+        <div class="hero">
+            <div class="hero-content">
+                <h1>Effortless File Sharing</h1>
+                <p>Share, collaborate, and manage your files easily and securely.</p>
+                <a href="<%= request.mainURL %>/Register" class="btn btn-danger">Get Started</a>
+            </div>
+        </div>

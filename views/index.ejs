@@ -1,0 +1,267 @@
+<%- include("includes/header") %>
+
+<style>
+  body {
+    background: #f9f9f9;
+    color: #333;
+    font-family: sans-serif;
+  }
+
+  h1, h2, h3, h4 {
+    font-weight: 600;
+  }
+
+  #homeApp {
+    margin-bottom: 80px;
+  }
+
+  #features {
+    margin-top: 50px;
+    margin-bottom: 50px;
+  }
+
+  .card {
+    background: #fff;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    margin-bottom: 30px;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+  }
+
+  .card-header img {
+    max-width: 80px;
+    margin: 20px auto;
+    display: block;
+  }
+
+  .card-body {
+    padding: 20px;
+    text-align: center;
+  }
+
+  .card-body h4 {
+    margin-bottom: 15px;
+    color: #111;
+  }
+
+  #cta {
+    padding: 50px 0;
+    text-align: center;
+    background: #fff;
+  }
+
+  #cta h2 {
+    margin-bottom: 20px;
+  }
+
+  #cta p {
+    font-size: 18px;
+    color: #555;
+  }
+
+  /* Team Section */
+  #teamSection {
+    background: #fff;
+    padding: 50px 0;
+    text-align: center;
+  }
+
+  #teamSection h2 {
+    margin-bottom: 40px;
+    font-size: 2rem;
+    color: #124265;
+  }
+
+  .team-member {
+    margin-bottom: 30px;
+  }
+
+  .team-member h4 {
+    margin-top: 15px;
+    font-size: 1.2rem;
+    color: #1D3557;
+  }
+
+  .team-member p {
+    color: #555;
+    font-size: 0.95rem;
+  }
+
+  .team-member img {
+    width: 100px;
+    height: 100px;
+    border-radius: 50%;
+    margin-bottom: 15px;
+    object-fit: cover;
+  }
+</style>
+
+<div id="homeApp">
+    <div class="container" id="features">
+        <div class="row">
+            <div class="col-md-12 text-center">
+                <h1>Secure File Sharing System</h1>
+                <p>A simple and reliable platform to share and manage your files securely.</p>
+                <a href="<%= request.mainURL %>/MyUploads" class="btn btn-primary">Get Started</a>
+            </div>
+        </div>
+
+        <!-- Features Row 1 -->
+        <div class="row">
+            <div class="col-md-4">
+                <div class="card">
+                    <div class="card-header">
+                        <img v-bind:src="mainURL + '/public/img/nodejs-icon.svg'" alt="NodeJS" />
+                    </div>
+                    <div class="card-body">
+                        <h4>Node JS</h4>
+                        <p>Backend built in Node.js for efficient performance and real-time file editing.</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-md-4">
+                <div class="card">
+                    <div class="card-header">
+                        <img v-bind:src="mainURL + '/public/img/mongodb-icon.svg'" alt="MongoDB" />
+                    </div>
+                    <div class="card-body">
+                        <h4>Mongo DB</h4>
+                        <p>Flexible database with high performance and easy horizontal scaling.</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-4">
+                <div class="card">
+                    <div class="card-header">
+                        <img v-bind:src="mainURL + '/public/img/expressjs.svg'" alt="ExpressJS" style="width: 100px;" />
+                    </div>
+                    <div class="card-body">
+                        <h4>Express JS</h4>
+                        <p>Fast and flexible web framework for building APIs and real-time applications.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Features Row 2 -->
+        <div class="row">
+            <div class="col-md-4">
+                <div class="card">
+                    <div class="card-header">
+                        <img v-bind:src="mainURL + '/public/img/socket-io.svg'" alt="Socket IO" />
+                    </div>
+                    <div class="card-body">
+                        <h4>Socket IO</h4>
+                        <p>Bi-directional event-based communication for realtime updates.</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-4">
+                <div class="card">
+                    <div class="card-header">
+                        <img v-bind:src="mainURL + '/public/img/compression.png'" alt="Compression" />
+                    </div>
+                    <div class="card-body">
+                        <h4>Image Compression</h4>
+                        <p>Upload images without losing quality, saving space for more files.</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-4">
+                <div class="card">
+                    <div class="card-header">
+                        <img v-bind:src="mainURL + '/public/img/share.svg'" alt="Share Files" />
+                    </div>
+                    <div class="card-body">
+                        <h4>File Sharing</h4>
+                        <p>Easily share files publicly or privately with others.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Features Row 3 -->
+        <div class="row">
+            <div class="col-md-4">
+                <div class="card">
+                    <div class="card-header">
+                        <img v-bind:src="mainURL + '/public/img/collaboration.svg'" alt="Collaboration" />
+                    </div>
+                    <div class="card-body">
+                        <h4>Realtime Collaboration</h4>
+                        <p>Get instant updates when files change, no page refresh needed.</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Blog Integration -->
+            <div class="col-md-4">
+                <div class="card">
+                    <div class="card-header">
+                        <img v-bind:src="mainURL + '/public/img/blogging.svg'" alt="Blog" />
+                    </div>
+                    <div class="card-body">
+                        <h4>Blog Integration</h4>
+                        <p>Keep your users informed with updates, news, and guides.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- TEAM SECTION -->
+    <div class="container" id="teamSection">
+      <h2>Meet Our Team</h2>
+      <div class="row">
+        <div class="col-md-3 text-center team-member">
+          <img src="https://i.ibb.co/hddWgVq/about-1.png" alt="Tanmay Bajpai">
+          <h4>Tanmay Bajpai</h4>
+          <p>Developer</p>
+        </div>
+        <div class="col-md-3 text-center team-member">
+          <img src="https://i.ibb.co/hddWgVq/about-1.png" alt="Vansh Bhardwaj">
+          <h4>Vansh Bhardwaj</h4>
+          <p>Developer</p>
+        </div>
+        <div class="col-md-3 text-center team-member">
+          <img src="https://i.ibb.co/TbhXVn1/about-2.png" alt="Amitansh Gupta">
+          <h4>Amitansh Gupta</h4>
+          <p>Developer</p>
+        </div>
+        <div class="col-md-3 text-center team-member">
+          <img src="https://i.ibb.co/TbhXVn1/about-2.png" alt="Akhil">
+          <h4>Akhil</h4>
+          <p>Developer</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Removed old counterContainer section -->
+
+    <div class="container" id="cta">
+        <div class="row">
+            <div class="col-md-12">
+                <h2>Get Started Today</h2>
+                <p>Sign up and start sharing your files with ease.</p>
+                <a href="<%= request.mainURL %>/Register" class="btn btn-success">Register Now</a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+  const homeApp = Vue.createApp({
+      data() {
+          return {
+              mainURL: baseUrl,
+          }
+      }
+  });
+  homeApp.mount("#homeApp");
+</script>
+
+<%- include("includes/footer") %>
